@@ -36,7 +36,8 @@ I have no clue. Good luck!
 There’s a Sun at the center (holding it down), with the Earth orbiting around it. To complete the trio, we have the Moon doing its best to keep up, orbiting the Earth. And yes, they even spin!
 ![20](https://github.com/user-attachments/assets/2578a8fa-49c9-430a-bcfa-2a6b8079c943)
 
-Don't let the picture decieve you the spheres have Phong lighting... I think.
+### Don't let the picture decieve you the spheres have Phong lighting... I think.
+
 ![13](https://github.com/user-attachments/assets/21b876ad-87f0-4052-9671-8fb8fe396446)
 
 ---
