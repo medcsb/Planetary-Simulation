@@ -1,8 +1,5 @@
-# C-OpenGL-simple-orbit-IGR200
-Simple sphere orbit in openGL, for my 3D graphics class at Télécom Paris
 
-
-# 🌌 Solar System Simulator – IGR200 Edition 🌍☀️
+# 🌌 Simple Sphere Orbit – IGR200 🌍☀️
 
 This is a simple solar system simulator created for the IGR200 3D Graphics course at Télécom Paris. It's not that good, for now.
 
