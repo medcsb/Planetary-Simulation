@@ -56,7 +56,7 @@ The console will greet you with a string of commands, but here’s the rundown:
 - **Space/Left Control**: Move up/down
 - **UP-Key/DOWN-Key**: Move up/down
 - **Left Shift/Left Alt**: Increase/decrease speed
-- **ESC**: Bail out of the simulation
+- **ESC**: Get out of the simulation
 
 ---
 
