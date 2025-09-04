@@ -1,0 +1,9 @@
+
+build/
+out/
+
+.clang-format
+
+.vscode/
+
+.vs/
