@@ -28,7 +28,6 @@ private:
 
     std::vector<Shader> m_shaderPrograms;
 
-    std::vector<SimpleRenderable> m_simpleRenderables;
     std::vector<PBR_Renderable> m_pbrRenderables;
     std::vector<Obj> m_objects;
     std::vector<Model> m_models;
@@ -47,18 +46,15 @@ public:
 
     RenderInfo& getRenderInfo() { return m_renderInfo; }
     std::vector<std::string>* getObjNames() { return &m_objNames; }
-    std::vector<SimpleRenderable>* getSimplerenderables() { return &m_simpleRenderables; }
     std::vector<PBR_Renderable>* getPBRRenderables() { return &m_pbrRenderables; }
     SkyBox* getSkyBox() { return &m_skyBox; }
     std::vector<Obj>* getObjects() { return &m_objects; }
 
     void addLight();
     
-    void AddCityObj();
     void AddBarelObj();
-    void AddSimpleCubeObj();
     void AddPBRCubeObj();
-    void AddBeachObj();
+    void AddSphereObj();
 
     void AddSkyBox();
 

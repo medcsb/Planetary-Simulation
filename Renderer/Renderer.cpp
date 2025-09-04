@@ -8,7 +8,6 @@ Renderer::Renderer() {}
 Renderer::~Renderer() {}
 
 void Renderer::cleanup() {
-    m_simpleRenderSystem.cleanup();
     m_pbrRenderSystem.cleanup();
     m_cubeMapRenderSystem.cleanup();
 
@@ -44,7 +43,6 @@ void Renderer::render() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    m_simpleRenderSystem.render(m_renderInfo);
     m_pbrRenderSystem.render(m_renderInfo);
     m_cubeMapRenderSystem.render(m_renderInfo);
     renderLight();

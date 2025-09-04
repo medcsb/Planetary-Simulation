@@ -10,14 +10,17 @@
 #include "RenderStructs.hpp"
 
 struct PBR_UBO {
-    float pad;
+    glm::vec3 color{1.0f, 1.0f, 1.0f};
     float attenuationFactor;
+
     float ambientIntensity;
     float gamma;
     float roughness;
     float metallic;
-    float ao; // Ambient Occlusion
+
+    float ao;
     int flags;
+    float pad[2];
 };
 
 struct PBR_Material {

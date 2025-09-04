@@ -5,16 +5,63 @@ Scene::Scene() {}
 Scene::~Scene() {}
 
 void Scene::cleanup() {
-    for (auto& renderable : m_simpleRenderables) {
-        renderable.meshBuffer.cleanup();
-    }
     for (auto& renderable : m_pbrRenderables) {
         renderable.meshBuffer.cleanup();
     }
-    m_simpleRenderables.clear();
     m_objects.clear();
     m_models.clear();
     m_objNames.clear();
+}
+
+void Scene::AddSphereObj() {
+    if (m_pbrRenderables.size() <= m_pbrCount) {
+        m_pbrRenderables.resize(m_pbrCount + 1);
+    }
+
+    Obj obj;
+    obj.idx = m_objCount++;
+    obj.pbrIdx = m_pbrCount++;
+    m_objNames.push_back("Sphere " + std::to_string(obj.idx + 1));
+    obj.type = RenderType::PBR;
+    m_objects.push_back(obj);
+
+    Model sphereModel;
+    sphereModel.SphereModel();
+    m_models.push_back(sphereModel);
+
+    std::vector<DummyVert> vertData = getDummyVerts(m_models[obj.idx].getVertices());
+    VAOConfig config = createPBRConfig(obj.idx);
+    m_pbrRenderables[obj.pbrIdx].meshBuffer = Buffer::createMeshBuffer(
+        config,
+        vertData.data(),
+        nullptr
+    );
+
+    int flags = HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_METALLIC_TEX;
+    m_pbrRenderables[obj.pbrIdx].material.ubo = {
+        .color = {0.2f, 0.5f, 0.8f},
+        .attenuationFactor = 1.0f,
+        .ambientIntensity = 0.4f,
+        .gamma = 2.2f,
+        .roughness = 0.5f,
+        .metallic = 0.5f,
+        .ao = 1.0f,
+        .flags = flags,
+        .pad = {0.0f, 0.0f}
+    };
+
+    m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/albedo_map.jpg", 1);
+    m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/normal_map.jpg", 2);
+    m_pbrRenderables[obj.pbrIdx].material.metallicTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/metal_map.jpg", 4);
+    //
+
+    m_pbrRenderables[obj.pbrIdx].transform = {
+        .m_matrix = glm::mat4(1.0f),
+        .pos = {0.0f, 0.0f, 0.0f},
+        .rot = {0.0f, 0.0f, 0.0f},
+        .scale = {1.0f, 1.0f, 1.0f}
+    };
+    m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
 }
 
 void Scene::AddSkyBox() {
@@ -37,46 +84,6 @@ void Scene::AddSkyBox() {
         std::string(TEXTURE_DIR) + "space/pz.png",
         std::string(TEXTURE_DIR) + "space/nz.png"
     }, 10);
-}
-
-void Scene::AddCityObj() {
-    if (m_simpleRenderables.size() <= m_simpleCount) {
-        m_simpleRenderables.resize(m_simpleCount + 1);
-    }
-
-    Obj obj;
-    obj.idx = m_objCount++;
-    obj.simpleIdx = m_simpleCount++;
-    m_objNames.push_back("City " + std::to_string(obj.idx + 1));
-    obj.type = RenderType::Simple;
-    m_objects.push_back(obj);
-
-    Model cityModel;
-    cityModel.loadFromFile(std::string(MODEL_DIR) + "city.obj");
-    m_models.push_back(cityModel);
-    VAOConfig config = createConfig(obj.idx);
-    m_simpleRenderables[obj.simpleIdx].meshBuffer = Buffer::createMeshBuffer(
-        config,
-        m_models[obj.idx].getVertices().data(),
-        m_models[obj.idx].getIndices().data()
-    );
-    m_simpleRenderables[obj.simpleIdx].material.ubo = {
-        .baseColor = {1.0f, 0.5f, 0.2f, 1.0f},
-        .ambient = 0.1f,
-        .diffuse = 0.8f,
-        .specular = 0.5f,
-        .specStrength = 0.5f,
-        .specPower = 32.0f,
-        .texBlend = 1.0f,
-        .pad = {0.0f, 0.0f}
-    };
-
-    m_simpleRenderables[obj.simpleIdx].transform = {
-        .m_matrix = glm::mat4(1.0f),
-        .pos = {0.0f, 0.0f, 0.0f},
-        .rot = {0.0f, 0.0f, 0.0f},
-        .scale = {1.0f, 1.0f, 1.0f}
-    };
 }
 
 void Scene::AddBarelObj() {
@@ -105,14 +112,15 @@ void Scene::AddBarelObj() {
 
     int flags = HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_ROUGHNESS_TEX | HAS_METALLIC_TEX;
     m_pbrRenderables[obj.pbrIdx].material.ubo = {
-        .pad = 0.0f,
+        .color = {0.2f, 0.5f, 0.8f},
         .attenuationFactor = 1.0f,
         .ambientIntensity = 0.4f,
         .gamma = 2.2f,
         .roughness = 0.5f,
         .metallic = 0.5f,
         .ao = 1.0f,
-        .flags = flags
+        .flags = flags,
+        .pad = {0.0f, 0.0f}
     };
 
     m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_barel/albedo.png", 1);
@@ -139,52 +147,6 @@ void Scene::addLight() {
     glGenVertexArrays(1, &mainLight.dummyVAO);
     m_renderInfo.lights.push_back(mainLight);
 
-}
-
-void Scene::AddSimpleCubeObj() {
-
-    if (m_simpleRenderables.size() <= m_simpleCount) {
-        m_simpleRenderables.resize(m_simpleCount + 1);
-    }
-
-    Obj obj;
-    obj.idx = m_objCount++;
-    obj.simpleIdx = m_simpleCount++;
-    m_objNames.push_back("Cube " + std::to_string(obj.idx + 1));
-    obj.type = RenderType::Simple;
-    m_objects.push_back(obj);
-    
-    Model cubeModel;
-    cubeModel.CubeModel();
-    m_models.push_back(cubeModel);
-    
-    VAOConfig config = createConfig(obj.idx);
-
-    m_simpleRenderables[obj.simpleIdx].meshBuffer = Buffer::createMeshBuffer(
-        config,
-        m_models[obj.idx].getVertices().data(),
-        m_models[obj.idx].getIndices().data()
-    );
-
-    m_simpleRenderables[obj.simpleIdx].material.ubo = {
-        .baseColor = {1.0f, 0.5f, 0.2f, 1.0f},
-        .ambient = 0.1f,
-        .diffuse = 0.8f,
-        .specular = 0.5f,
-        .specStrength = 0.5f,
-        .specPower = 32.0f,
-        .texBlend = 1.0f,
-        .pad = {0.0f, 0.0f}
-    };
-
-    m_simpleRenderables[obj.simpleIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_tiles/albedo_map.jpg", 0);
-
-    m_simpleRenderables[obj.simpleIdx].transform = {
-        .m_matrix = glm::mat4(1.0f),
-        .pos = {0.0f, 0.0f, 0.0f},
-        .rot = {0.0f, 0.0f, 0.0f},
-        .scale = {1.0f, 1.0f, 1.0f}
-    };
 }
 
 void Scene::AddPBRCubeObj() {
@@ -219,14 +181,15 @@ void Scene::AddPBRCubeObj() {
     //flags |= HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_ROUGHNESS_TEX | HAS_METALLIC_TEX;
 
     m_pbrRenderables[obj.pbrIdx].material.ubo = {
-        .pad = 0.0f,
+        .color = {0.2f, 0.5f, 0.8f},
         .attenuationFactor = 1.0f,
         .ambientIntensity = 0.4f,
         .gamma = 2.2f,
         .roughness = 0.5f,
         .metallic = 0.5f,
         .ao = 1.0f,
-        .flags = flags
+        .flags = flags,
+        .pad = {0.0f, 0.0f}
     };
 
     //m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_wood/albedo_map.jpg", 1);
@@ -252,59 +215,6 @@ void Scene::AddPBRCubeObj() {
 
     m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
 
-}
-
-void Scene::AddBeachObj() {
-    if (m_pbrRenderables.size() <= m_pbrCount) {
-        m_pbrRenderables.resize(m_pbrCount + 1);
-    }
-
-    Obj obj;
-    obj.idx = m_objCount++;
-    obj.pbrIdx = m_pbrCount++;
-    m_objNames.push_back("Beach " + std::to_string(obj.idx + 1));
-    obj.type = RenderType::PBR;
-    m_objects.push_back(obj);
-
-    Model beachModel;
-    beachModel.loadFromFile(std::string(MODEL_DIR) + "beach.obj");
-    m_models.push_back(beachModel);
-
-    std::vector<DummyVert> vertData = getDummyVerts(m_models[obj.idx].getVertices());
-
-    VAOConfig config = createPBRConfig(obj.idx);
-    m_pbrRenderables[obj.pbrIdx].meshBuffer = Buffer::createMeshBuffer(
-        config,
-        vertData.data(),
-        nullptr
-    );
-
-    int flags = 0;
-    flags |= HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_AO_TEX;
-
-    m_pbrRenderables[obj.pbrIdx].material.ubo = {
-        .pad = 0.0f,
-        .attenuationFactor = 1.0f,
-        .ambientIntensity = 0.4f,
-        .gamma = 2.2f,
-        .roughness = 0.5f,
-        .metallic = 0.0f,
-        .ao = 1.0f,
-        .flags = flags
-    };
-
-    m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "beach/albedo.jpg", 1);
-    m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "beach/normal.jpg", 2);
-    m_pbrRenderables[obj.pbrIdx].material.aoTexture.loadTexture(std::string(TEXTURE_DIR) + "beach/ao.jpg", 5);
-
-    m_pbrRenderables[obj.pbrIdx].transform = {
-        .m_matrix = glm::mat4(1.0f),
-        .pos = {0.0f, 0.0f, 0.0f},
-        .rot = {0.0f, 0.0f, 0.0f},
-        .scale = {1.0f, 1.0f, 1.0f}
-    };
-
-    m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
 }
 
 VAOConfig Scene::createPBRConfig(size_t idx) {
@@ -344,20 +254,7 @@ VAOConfig Scene::createConfig(size_t idx) {
 
 void Scene::deleteObj(size_t idx) {
     Obj& obj = m_objects[idx];
-    if (obj.type == RenderType::Simple) {
-        m_simpleRenderables[obj.simpleIdx].meshBuffer.cleanup();
-        m_simpleRenderables.erase(m_simpleRenderables.begin() + obj.simpleIdx);
-        m_simpleCount--;
-        // delete the model
-        m_models.erase(m_models.begin() + obj.idx);
-        // delete the object name
-        m_objNames.erase(m_objNames.begin() + obj.idx);
-        // update the indices of the objects
-        for (size_t i = idx; i < m_objects.size(); ++i) {
-            if (m_objects[i].type != RenderType::Simple) continue;
-            m_objects[i].simpleIdx--;
-        }
-    } else if (obj.type == RenderType::PBR) {
+    if (obj.type == RenderType::PBR) {
         m_pbrRenderables[obj.pbrIdx].meshBuffer.cleanup();
         m_pbrRenderables.erase(m_pbrRenderables.begin() + obj.pbrIdx);
         m_pbrCount--;

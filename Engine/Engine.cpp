@@ -18,29 +18,24 @@ Engine::Engine() {
     m_ui.init(m_window.handle , std::to_string(GLSL_VERSION));
     m_ui.setOnShaderReloadCallback([this](size_t idx) {
         m_shaderPrograms[idx].reload();
-        m_renderer.initSimpleShaders(m_shaderPrograms[idx].getProgramId());
+        m_renderer.initPBRShaders(m_shaderPrograms[0].getProgramId());
     });
-    //m_scene.AddSimpleCubeObj();
-    //m_scene.AddPBRCubeObj();
     m_scene.addLight();
-    Shader simpleShader{std::string(SHADER_DIR) + "simple.vert", std::string(SHADER_DIR) + "simple.frag"};
     Shader pbrShader{std::string(SHADER_DIR) + "pbr.vert", std::string(SHADER_DIR) + "pbr.frag"};
     Shader skyboxShader{std::string(SHADER_DIR) + "skybox.vert", std::string(SHADER_DIR) + "skybox.frag"};
     Shader lightShader{std::string(SHADER_DIR) + "light.vert", std::string(SHADER_DIR) + "light.frag"};
-    simpleShader.init();
     pbrShader.init();
     skyboxShader.init();
     lightShader.init();
-    m_shaderPrograms.push_back(simpleShader);
     m_shaderPrograms.push_back(pbrShader);
     m_shaderPrograms.push_back(skyboxShader);
-    m_renderer.initSimpleShaders(simpleShader.getProgramId());
     m_renderer.initPBRShaders(pbrShader.getProgramId());
     m_renderer.initCubeMapShaders(skyboxShader.getProgramId());
     m_renderer.setLightShaderProgram(lightShader.getProgramId());
-    m_renderer.setSimpleRenderables(m_scene.getSimplerenderables());
     m_renderer.setPBRRenderables(m_scene.getPBRRenderables());
     m_renderer.setSkyBox(m_scene.getSkyBox());
+
+    std::cout <<sizeof(float) << std::endl;
 
     fillUIStruct();
     glEnable(GL_DEPTH_TEST);
@@ -128,7 +123,6 @@ void Engine::fillUIStruct() {
     m_uiStruct.mainFboSize = &m_mainFboSize;
     m_uiStruct.main_fbo_tex = (ImTextureID*)(intptr_t)m_renderer.getMainFrameColor();
     m_uiStruct.scene = &m_scene;
-    m_uiStruct.simpleRenderables = m_scene.getSimplerenderables();
     m_uiStruct.pbrRenderables = m_scene.getPBRRenderables();
     m_uiStruct.objNames = m_scene.getObjNames();
     m_uiStruct.objects = m_scene.getObjects();

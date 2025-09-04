@@ -111,10 +111,6 @@ void ImguiUI::renderEditPanel(UI_Struct& ui_struct) {
         size_t pbrIdx = ui_struct.objects->at(m_selectedObjIdx).pbrIdx;
         transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
         pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
-    } else if (ui_struct.objects->at(m_selectedObjIdx).type == RenderType::Simple) {
-        size_t simpleIdx = ui_struct.objects->at(m_selectedObjIdx).simpleIdx;
-        transformEdit(ui_struct.simpleRenderables->at(simpleIdx).transform);
-        simpleMaterialEdit(ui_struct.simpleRenderables->at(simpleIdx));
     }
     ImGui::End();
 }
@@ -161,12 +157,10 @@ void ImguiUI::sceneSettings(Scene* scene, std::vector<Light>* lights) {
                     ImGui::TreePop();
                 }
             }
-            if (ImGui::Button("Add Simple Cube")) scene->AddSimpleCubeObj();
             if (ImGui::Button("Add PBR Cube")) scene->AddPBRCubeObj();
-            if (ImGui::Button("Add Beach")) scene->AddBeachObj();
-            if (ImGui::Button("Add City")) scene->AddCityObj();
             if (ImGui::Button("Add Barel")) scene->AddBarelObj();
             if (ImGui::Button("Add SkyBox")) scene->AddSkyBox();
+            if (ImGui::Button("Add Sphere")) scene->AddSphereObj();
             ImGui::TreePop();
         }
 
@@ -226,17 +220,8 @@ void ImguiUI::transformEdit(Transform& transform) {
     }
 }
 
-void ImguiUI::simpleMaterialEdit(SimpleRenderable& renderable) {
-    ImGui::ColorPicker4("Base Color", &renderable.material.ubo.baseColor[0]);
-    ImGui::SliderFloat("Ambient", &renderable.material.ubo.ambient, 0.0f, 1.0f);
-    ImGui::SliderFloat("Diffuse", &renderable.material.ubo.diffuse, 0.0f, 1.0f);
-    ImGui::SliderFloat("Specular", &renderable.material.ubo.specular, 0.0f, 1.0f);
-    ImGui::SliderFloat("Specular Strength", &renderable.material.ubo.specStrength, 0.0f, 1.0f);
-    ImGui::SliderFloat("Specular Power", &renderable.material.ubo.specPower, 1.0f, 128.0f);
-    ImGui::SliderFloat("Texture Blend", &renderable.material.ubo.texBlend, 0.0f, 1.0f);
-}
-
 void ImguiUI::pbrMaterialEdit(PBR_Renderable& renderable) {
+    ImGui::ColorEdit3("Base Color", glm::value_ptr(renderable.material.ubo.color));
     ImGui::SliderFloat("attenuation", &renderable.material.ubo.attenuationFactor, 0.0f, 10.0f);
     ImGui::SliderFloat("Ambient", &renderable.material.ubo.ambientIntensity, 0.0f, 1.0f);
     ImGui::SliderFloat("Gamma", &renderable.material.ubo.gamma, 0.0f, 3.0f);

@@ -23,7 +23,6 @@ struct UI_Struct {
     Scene* scene;
     std::vector<Obj>* objects;
     std::vector<std::string>* objNames;
-    std::vector<SimpleRenderable>* simpleRenderables;
     std::vector<PBR_Renderable>* pbrRenderables;
     std::vector<Shader>* shaders;
     std::vector<Light>* lights;
@@ -78,6 +77,5 @@ private:
     void shaders(std::vector<Shader>* shaders);
 
     void transformEdit(Transform& transform);
-    void simpleMaterialEdit(SimpleRenderable& renderable);
     void pbrMaterialEdit(PBR_Renderable& renderable);
 };

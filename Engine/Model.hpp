@@ -22,6 +22,7 @@ public:
 
     void loadFromFile(const std::string& path);
     void CubeModel();
+    void SphereModel(size_t resolution = 36, float radius = 1.0f);
     void CubeModelUnique();
 
     std::vector<Vertex>& getVertices() { return vertices; }

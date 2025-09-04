@@ -15,15 +15,17 @@ uniform vec3 lightColor;
 
 // Material UBO
 layout(std140, binding = 1) uniform Material {
-    float pad;
+    vec3 inColor;
     float attenuationFactor;
+
     float ambientIntensity;
     float gamma;
-
     float metallic;
     float roughness;
+
     float ao;
-    int flags; 
+    int flags;
+    float pad[2];
 };
 
 #define HAS_ALBEDO_TEX     0x01 // bit 1
@@ -82,7 +84,7 @@ void main() {
     if ((flags & HAS_ALBEDO_TEX) != 0) {
         albedo = pow(texture(albedoMap, TexCoords).rgb, vec3(gamma)); // sRGB → linear
     } else {
-        albedo = pow(vec3(pad), vec3(gamma));
+        albedo = pow(inColor, vec3(gamma));
     }
 
     vec3 N = getNormalFromMap();
