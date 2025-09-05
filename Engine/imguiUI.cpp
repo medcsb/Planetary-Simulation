@@ -111,6 +111,7 @@ void ImguiUI::renderEditPanel(UI_Struct& ui_struct) {
         size_t pbrIdx = ui_struct.objects->at(m_selectedObjIdx).pbrIdx;
         transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
         pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
+        physicsPropertiesEdit(ui_struct.scene);
     }
     ImGui::End();
 }
@@ -228,4 +229,14 @@ void ImguiUI::pbrMaterialEdit(PBR_Renderable& renderable) {
     ImGui::SliderFloat("Metallic", &renderable.material.ubo.metallic, 0.0f, 1.0f);
     ImGui::SliderFloat("Roughness", &renderable.material.ubo.roughness, 0.0f, 1.0f);
     ImGui::SliderFloat("Ambient Occlusion", &renderable.material.ubo.ao, 0.0f, 1.0f);
+}
+
+void ImguiUI::physicsPropertiesEdit(Scene* scene) {
+    if (ImGui::CollapsingHeader("Physics Properties")) {
+        Physics* physics = scene->getPhysics();
+        Planet& planet = physics->getPlanets()->at(m_selectedObjIdx);
+        ImGui::Text("Planet ID: %u", planet.id);
+        ImGui::SliderFloat("Mass", &planet.mass, 1.0f, 10000.0f);
+        ImGui::Text("Position: (%.2f, %.2f, %.2f)", planet.pos.x, planet.pos.y, planet.pos.z);
+    }
 }

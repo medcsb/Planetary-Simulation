@@ -78,4 +78,5 @@ private:
 
     void transformEdit(Transform& transform);
     void pbrMaterialEdit(PBR_Renderable& renderable);
+    void physicsPropertiesEdit(Scene* scene);
 };

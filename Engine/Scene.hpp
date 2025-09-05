@@ -3,6 +3,7 @@
 #include "Photon/Renderer.h"
 #include "Shader.hpp"
 #include "Model.hpp"
+#include "physics.hpp"
 
 struct DummyVert {
     glm::vec3 pos;
@@ -21,6 +22,7 @@ struct Obj {
 
 class Scene {
 private:
+    Physics& m_physics;
 
     size_t m_objCount = 0;
     size_t m_pbrCount = 0;
@@ -36,7 +38,7 @@ private:
     RenderInfo m_renderInfo;
     
 public:
-    Scene();
+    Scene(Physics& physics) : m_physics(physics) {}
     ~Scene();
 
     void cleanup();
@@ -49,8 +51,9 @@ public:
     std::vector<PBR_Renderable>* getPBRRenderables() { return &m_pbrRenderables; }
     SkyBox* getSkyBox() { return &m_skyBox; }
     std::vector<Obj>* getObjects() { return &m_objects; }
+    Physics* getPhysics() { return &m_physics; }
 
-    void addLight();
+    void AddLight();
     
     void AddBarelObj();
     void AddPBRCubeObj();
@@ -61,6 +64,8 @@ public:
     void deleteObj(size_t idx);
     
     void initExample();
+
+    void update(float dt);
     
     private:
     VAOConfig createConfig(size_t idx);

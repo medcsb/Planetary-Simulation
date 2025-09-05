@@ -9,6 +9,7 @@
 #include "Camera.hpp"
 #include "imguiUI.hpp"
 #include "Scene.hpp"
+#include "physics.hpp"
 
 #include <vector>
 
@@ -28,7 +29,9 @@ private:
 
     Renderer m_renderer{};
     ImguiUI m_ui{};
-    Scene m_scene{};
+    Physics m_physics{};
+    Scene m_scene{m_physics};
+
 
     UI_Struct m_uiStruct{};
 

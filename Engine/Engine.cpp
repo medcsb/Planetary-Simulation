@@ -20,7 +20,6 @@ Engine::Engine() {
         m_shaderPrograms[idx].reload();
         m_renderer.initPBRShaders(m_shaderPrograms[0].getProgramId());
     });
-    m_scene.addLight();
     Shader pbrShader{std::string(SHADER_DIR) + "pbr.vert", std::string(SHADER_DIR) + "pbr.frag"};
     Shader skyboxShader{std::string(SHADER_DIR) + "skybox.vert", std::string(SHADER_DIR) + "skybox.frag"};
     Shader lightShader{std::string(SHADER_DIR) + "light.vert", std::string(SHADER_DIR) + "light.frag"};
@@ -34,6 +33,8 @@ Engine::Engine() {
     m_renderer.setLightShaderProgram(lightShader.getProgramId());
     m_renderer.setPBRRenderables(m_scene.getPBRRenderables());
     m_renderer.setSkyBox(m_scene.getSkyBox());
+
+    m_scene.initExample();
 
     std::cout <<sizeof(float) << std::endl;
 
@@ -63,12 +64,15 @@ Engine::~Engine() {
 void Engine::run() {
     while(!glfwWindowShouldClose(m_window.handle)) {
         processInput(m_window.handle, ImGui::GetIO().DeltaTime);
+
+        #ifdef ENGINE_MODE
         if (m_mainFboSize.resized) {
             m_renderer.initFrameBuffer(m_mainFboSize.width, m_mainFboSize.height);
             m_uiStruct.main_fbo_tex = (ImTextureID*)(intptr_t)m_renderer.getMainFrameColor();
             m_uiStruct.mainFboSize = &m_mainFboSize;
             m_mainFboSize.resized = false;
         }
+        #endif
 
         
         #ifdef ENGINE_MODE
@@ -77,7 +81,6 @@ void Engine::run() {
         m_camera.updateProjectionMatrix(m_window.width, m_window.height);
         #endif
         m_camera.updateViewMatrix();
-        
         
         m_scene.setViewMatrix(m_camera.getViewMatrix());
         m_scene.setProjectionMatrix(m_camera.getProjectionMatrix());
@@ -91,6 +94,8 @@ void Engine::run() {
         #else
         m_renderer.renderToScreen(m_window.width, m_window.height);
         #endif
+
+        m_scene.update(0.016f);
         
         glfwSwapBuffers(m_window.handle);
         glfwPollEvents();

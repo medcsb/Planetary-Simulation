@@ -1,7 +1,7 @@
 #include "Scene.hpp"
 
 
-Scene::Scene() {}
+//Scene::Scene() {}
 Scene::~Scene() {}
 
 void Scene::cleanup() {
@@ -11,6 +11,24 @@ void Scene::cleanup() {
     m_objects.clear();
     m_models.clear();
     m_objNames.clear();
+}
+
+void Scene::update(float dt) {
+    m_physics.update(dt);
+    for (auto& planet : *m_physics.getPlanets()) {
+        m_pbrRenderables[planet.id].transform.setPos(planet.pos);
+        m_pbrRenderables[planet.id].transform.calcMatrix();
+    }
+}
+
+void Scene::initExample() {
+    AddSkyBox();
+    AddLight();
+    AddSphereObj();
+    m_physics.addPlanet(m_objects.back().pbrIdx, m_pbrRenderables.back().transform.pos, glm::vec3(0.05f), 1.0f, 1.0f);
+    AddSphereObj();
+    m_pbrRenderables.back().transform.setPos(glm::vec3(-3.0f, 0.0f, 0.0f));
+    m_physics.addPlanet(m_objects.back().pbrIdx, m_pbrRenderables.back().transform.pos, glm::vec3(-0.05f), 1000000.5f, 1.0f);
 }
 
 void Scene::AddSphereObj() {
@@ -138,7 +156,7 @@ void Scene::AddBarelObj() {
     m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
 }
 
-void Scene::addLight() {
+void Scene::AddLight() {
     Light mainLight;
     
     mainLight.pos = {0.0f, 1.0f, 3.0f};
