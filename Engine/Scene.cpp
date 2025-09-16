@@ -8,16 +8,15 @@ void Scene::cleanup() {
     for (auto& renderable : m_pbrRenderables) {
         renderable.meshBuffer.cleanup();
     }
-    m_objects.clear();
     m_models.clear();
     m_objNames.clear();
 }
 
 void Scene::update(float dt) {
     m_physics.update(dt);
-    for (auto& planet : *m_physics.getPlanets()) {
-        m_pbrRenderables[planet.id].transform.setPos(planet.pos);
-        m_pbrRenderables[planet.id].transform.calcMatrix();
+    for (size_t i = 0; i < m_pbrCount; ++i) {
+        m_pbrRenderables[i].transform.setPos(m_physics.getPlanets()->at(i).pos);
+        m_pbrRenderables[i].transform.calcMatrix();
     }
 }
 
@@ -25,10 +24,15 @@ void Scene::initExample() {
     AddSkyBox();
     AddLight();
     AddSphereObj();
-    m_physics.addPlanet(m_objects.back().pbrIdx, m_pbrRenderables.back().transform.pos, glm::vec3(0.05f), 1.0f, 1.0f);
+    m_physics.addPlanet(m_pbrRenderables.back().transform.pos, glm::vec3(0.05f), 1.0f, 1.0f);
     AddSphereObj();
     m_pbrRenderables.back().transform.setPos(glm::vec3(-3.0f, 0.0f, 0.0f));
-    m_physics.addPlanet(m_objects.back().pbrIdx, m_pbrRenderables.back().transform.pos, glm::vec3(-0.05f), 1000000.5f, 1.0f);
+    m_physics.addPlanet(m_pbrRenderables.back().transform.pos, glm::vec3(-0.05f), 1.0f, 1.0f);
+}
+
+void Scene::AddPlanetObj() {
+    AddSphereObj();
+    m_physics.addPlanet(m_pbrRenderables.back().transform.pos, glm::vec3(0.05f), 1.0f, 1.0f);
 }
 
 void Scene::AddSphereObj() {
@@ -36,27 +40,24 @@ void Scene::AddSphereObj() {
         m_pbrRenderables.resize(m_pbrCount + 1);
     }
 
-    Obj obj;
-    obj.idx = m_objCount++;
-    obj.pbrIdx = m_pbrCount++;
-    m_objNames.push_back("Sphere " + std::to_string(obj.idx + 1));
-    obj.type = RenderType::PBR;
-    m_objects.push_back(obj);
+    m_pbrCount++;
+    m_objNames.push_back("Sphere " + std::to_string(m_pbrCount));
+
 
     Model sphereModel;
     sphereModel.SphereModel();
     m_models.push_back(sphereModel);
 
-    std::vector<DummyVert> vertData = getDummyVerts(m_models[obj.idx].getVertices());
-    VAOConfig config = createPBRConfig(obj.idx);
-    m_pbrRenderables[obj.pbrIdx].meshBuffer = Buffer::createMeshBuffer(
+    std::vector<DummyVert> vertData = getDummyVerts(m_models[m_pbrCount - 1].getVertices());
+    VAOConfig config = createPBRConfig(m_pbrCount - 1);
+    m_pbrRenderables[m_pbrCount - 1].meshBuffer = Buffer::createMeshBuffer(
         config,
         vertData.data(),
         nullptr
     );
 
     int flags = HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_METALLIC_TEX;
-    m_pbrRenderables[obj.pbrIdx].material.ubo = {
+    m_pbrRenderables[m_pbrCount - 1].material.ubo = {
         .color = {0.2f, 0.5f, 0.8f},
         .attenuationFactor = 1.0f,
         .ambientIntensity = 0.4f,
@@ -68,22 +69,22 @@ void Scene::AddSphereObj() {
         .pad = {0.0f, 0.0f}
     };
 
-    m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/albedo_map.jpg", 1);
-    m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/normal_map.jpg", 2);
-    m_pbrRenderables[obj.pbrIdx].material.metallicTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/metal_map.jpg", 4);
-    //
+    m_pbrRenderables[m_pbrCount - 1].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/albedo_map.jpg", 1);
+    m_pbrRenderables[m_pbrCount - 1].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/normal_map.jpg", 2);
+    m_pbrRenderables[m_pbrCount - 1].material.metallicTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/metal_map.jpg", 4);
 
-    m_pbrRenderables[obj.pbrIdx].transform = {
+    m_pbrRenderables[m_pbrCount - 1].transform = {
         .m_matrix = glm::mat4(1.0f),
         .pos = {0.0f, 0.0f, 0.0f},
         .rot = {0.0f, 0.0f, 0.0f},
         .scale = {1.0f, 1.0f, 1.0f}
     };
-    m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
+    m_pbrRenderables[m_pbrCount - 1].transform.calcMatrix();
 }
 
 void Scene::AddSkyBox() {
     std::vector<float> vertData = Model::CubeVertices();
+    
     m_skyBox.meshBuffer = Buffer::createMeshBuffer(
         VAOConfig{
             .attributes = {{0, 3, GL_FLOAT, false, sizeof(float) * 3, 0}},
@@ -104,58 +105,6 @@ void Scene::AddSkyBox() {
     }, 10);
 }
 
-void Scene::AddBarelObj() {
-    if (m_pbrRenderables.size() <= m_pbrCount) {
-        m_pbrRenderables.resize(m_pbrCount + 1);
-    }
-
-    Obj obj;
-    obj.idx = m_objCount++;
-    obj.pbrIdx = m_pbrCount++;
-    m_objNames.push_back("Barel " + std::to_string(obj.idx + 1));
-    obj.type = RenderType::PBR;
-    m_objects.push_back(obj);
-
-    Model barelModel;
-    barelModel.loadFromFile(std::string(MODEL_DIR) + "barrel.obj");
-    m_models.push_back(barelModel);
-
-    std::vector<DummyVert> vertData = getDummyVerts(m_models[obj.idx].getVertices());
-    VAOConfig config = createPBRConfig(obj.idx);
-    m_pbrRenderables[obj.pbrIdx].meshBuffer = Buffer::createMeshBuffer(
-        config,
-        vertData.data(),
-        nullptr
-    );
-
-    int flags = HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_ROUGHNESS_TEX | HAS_METALLIC_TEX;
-    m_pbrRenderables[obj.pbrIdx].material.ubo = {
-        .color = {0.2f, 0.5f, 0.8f},
-        .attenuationFactor = 1.0f,
-        .ambientIntensity = 0.4f,
-        .gamma = 2.2f,
-        .roughness = 0.5f,
-        .metallic = 0.5f,
-        .ao = 1.0f,
-        .flags = flags,
-        .pad = {0.0f, 0.0f}
-    };
-
-    m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_barel/albedo.png", 1);
-    m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_barel/normal.png", 2);
-    m_pbrRenderables[obj.pbrIdx].material.roughnessTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_barel/roughness.png", 3);
-    m_pbrRenderables[obj.pbrIdx].material.metallicTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_barel/metallic.png", 4);
-    
-
-    m_pbrRenderables[obj.pbrIdx].transform = {
-        .m_matrix = glm::mat4(1.0f),
-        .pos = {0.0f, 0.0f, 0.0f},
-        .rot = {0.0f, 0.0f, 0.0f},
-        .scale = {1.0f, 1.0f, 1.0f}
-    };
-    m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
-}
-
 void Scene::AddLight() {
     Light mainLight;
     
@@ -164,74 +113,6 @@ void Scene::AddLight() {
 
     glGenVertexArrays(1, &mainLight.dummyVAO);
     m_renderInfo.lights.push_back(mainLight);
-
-}
-
-void Scene::AddPBRCubeObj() {
-    if (m_pbrRenderables.size() <= m_pbrCount) {
-        m_pbrRenderables.resize(m_pbrCount + 1);
-    }
-
-    Obj obj;
-    obj.idx = m_objCount++;
-    obj.pbrIdx = m_pbrCount++;
-    m_objNames.push_back("PBR Cube " + std::to_string(obj.idx + 1));
-    obj.type = RenderType::PBR;
-    m_objects.push_back(obj);
-
-    Model cubeModel;
-    cubeModel.CubeModelUnique();
-    m_models.push_back(cubeModel);
-
-    std::vector<DummyVert> vertData = getDummyVerts(m_models[obj.idx].getVertices());
-
-    VAOConfig config = createPBRConfig(obj.idx);
-    m_pbrRenderables[obj.pbrIdx].meshBuffer = Buffer::createMeshBuffer(
-        config,
-        vertData.data(),
-        nullptr
-    );
-
-    int flags = 0;
-    // set bit 1, bit 2, bit 3, and bit 5
-    flags |= HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_ROUGHNESS_TEX;
-    //flags |= HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_ROUGHNESS_TEX | HAS_AO_TEX;
-    //flags |= HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_ROUGHNESS_TEX | HAS_METALLIC_TEX;
-
-    m_pbrRenderables[obj.pbrIdx].material.ubo = {
-        .color = {0.2f, 0.5f, 0.8f},
-        .attenuationFactor = 1.0f,
-        .ambientIntensity = 0.4f,
-        .gamma = 2.2f,
-        .roughness = 0.5f,
-        .metallic = 0.5f,
-        .ao = 1.0f,
-        .flags = flags,
-        .pad = {0.0f, 0.0f}
-    };
-
-    //m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_wood/albedo_map.jpg", 1);
-    //m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_wood/normal_map.jpg", 2);
-    //m_pbrRenderables[obj.pbrIdx].material.roughnessTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_wood/roughness_map.jpg", 3);
-    //m_pbrRenderables[obj.pbrIdx].material.aoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_wood/ao_map.jpg", 5);
-
-    //m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_metal/albedo_map.jpg", 1);
-    //m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_metal/normal_map.jpg", 2);
-    //m_pbrRenderables[obj.pbrIdx].material.roughnessTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_metal/roughness_map.jpg", 3);
-    //m_pbrRenderables[obj.pbrIdx].material.metallicTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_metal/metal_map.jpg", 4);
-
-    m_pbrRenderables[obj.pbrIdx].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_tiles/albedo_map.jpg", 1);
-    m_pbrRenderables[obj.pbrIdx].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_tiles/normal_map.jpg", 2);
-    m_pbrRenderables[obj.pbrIdx].material.roughnessTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_tiles/roughness_map.jpg", 3);
-
-    m_pbrRenderables[obj.pbrIdx].transform = {
-        .m_matrix = glm::mat4(1.0f),
-        .pos = {0.0f, 0.0f, 0.0f},
-        .rot = {0.0f, 0.0f, 0.0f},
-        .scale = {1.0f, 1.0f, 1.0f}
-    };
-
-    m_pbrRenderables[obj.pbrIdx].transform.calcMatrix();
 
 }
 
@@ -271,28 +152,15 @@ VAOConfig Scene::createConfig(size_t idx) {
 }
 
 void Scene::deleteObj(size_t idx) {
-    Obj& obj = m_objects[idx];
-    if (obj.type == RenderType::PBR) {
-        m_pbrRenderables[obj.pbrIdx].meshBuffer.cleanup();
-        m_pbrRenderables.erase(m_pbrRenderables.begin() + obj.pbrIdx);
-        m_pbrCount--;
-        // delete the model
-        m_models.erase(m_models.begin() + obj.idx);
-        // delete the object name
-        m_objNames.erase(m_objNames.begin() + obj.idx);
-        // update the indices of the objects
-        for (size_t i = idx; i < m_objects.size(); ++i) {
-            if (m_objects[i].type != RenderType::PBR) continue;
-            m_objects[i].pbrIdx--;
-        }
-    }
-
-    // delete the object
-    m_objects.erase(m_objects.begin() + idx);
-    for (size_t i = idx; i < m_objects.size(); ++i) {
-        m_objects[i].idx--;
-    }
-    m_objCount--;
+    m_pbrRenderables[idx].meshBuffer.cleanup();
+    m_pbrRenderables.erase(m_pbrRenderables.begin() + idx);
+    m_pbrCount--;
+    // delete the model
+    m_models.erase(m_models.begin() + idx);
+    // delete the object name
+    m_objNames.erase(m_objNames.begin() + idx);
+    // update physics planets
+    m_physics.getPlanets()->erase(m_physics.getPlanets()->begin() + idx);
 }
 
 std::vector<DummyVert> Scene::getDummyVerts(std::vector<Vertex>& vertices) {

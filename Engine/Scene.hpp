@@ -13,25 +13,14 @@ struct DummyVert {
     glm::vec3 bitangent;
 };
 
-struct Obj {
-    RenderType type;
-    size_t idx;
-    size_t simpleIdx = UINT32_MAX;
-    size_t pbrIdx = UINT32_MAX;
-};
-
 class Scene {
 private:
     Physics& m_physics;
 
-    size_t m_objCount = 0;
     size_t m_pbrCount = 0;
-    size_t m_simpleCount = 0;
 
     std::vector<Shader> m_shaderPrograms;
-
     std::vector<PBR_Renderable> m_pbrRenderables;
-    std::vector<Obj> m_objects;
     std::vector<Model> m_models;
     std::vector<std::string> m_objNames;
     SkyBox m_skyBox;
@@ -50,14 +39,13 @@ public:
     std::vector<std::string>* getObjNames() { return &m_objNames; }
     std::vector<PBR_Renderable>* getPBRRenderables() { return &m_pbrRenderables; }
     SkyBox* getSkyBox() { return &m_skyBox; }
-    std::vector<Obj>* getObjects() { return &m_objects; }
     Physics* getPhysics() { return &m_physics; }
+    size_t getObjCount() const { return m_pbrCount; }
 
     void AddLight();
     
-    void AddBarelObj();
-    void AddPBRCubeObj();
     void AddSphereObj();
+    void AddPlanetObj();
 
     void AddSkyBox();
 

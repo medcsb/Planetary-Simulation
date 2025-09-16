@@ -6,7 +6,7 @@ void Camera::init(float width, float height) {
 }
 
 void Camera::updateProjectionMatrix(float width, float height) {
-    projectionMatrix = glm::perspective(glm::radians(fov), width / height, 0.1f, 100.0f);
+    projectionMatrix = glm::perspective(glm::radians(fov), width / height, 0.1f, 1000.0f);
 }
 
 void Camera::updateOrthographicMatrix(float near, float far) {

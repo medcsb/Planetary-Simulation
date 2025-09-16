@@ -130,7 +130,6 @@ void Engine::fillUIStruct() {
     m_uiStruct.scene = &m_scene;
     m_uiStruct.pbrRenderables = m_scene.getPBRRenderables();
     m_uiStruct.objNames = m_scene.getObjNames();
-    m_uiStruct.objects = m_scene.getObjects();
     m_uiStruct.shaders = &m_shaderPrograms;
     m_uiStruct.lights = &m_scene.getRenderInfo().lights;
 }

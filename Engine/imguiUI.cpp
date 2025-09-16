@@ -107,12 +107,10 @@ void ImguiUI::renderEditPanel(UI_Struct& ui_struct) {
         ImGui::End();
         return;
     }
-    if (ui_struct.objects->at(m_selectedObjIdx).type == RenderType::PBR) {
-        size_t pbrIdx = ui_struct.objects->at(m_selectedObjIdx).pbrIdx;
-        transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
-        pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
-        physicsPropertiesEdit(ui_struct.scene);
-    }
+    size_t pbrIdx = m_selectedObjIdx;
+    transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
+    pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
+    physicsPropertiesEdit(ui_struct.scene);
     ImGui::End();
 }
 
@@ -142,26 +140,23 @@ void ImguiUI::settings() {
 void ImguiUI::sceneSettings(Scene* scene, std::vector<Light>* lights) {
     if (ImGui::CollapsingHeader("Scene Settings")) {
         if (ImGui::TreeNode("Objects")) {
-            for (size_t i = 0; i < scene->getObjects()->size(); ++i) {
+            if (ImGui::Button("Add Planet")) scene->AddPlanetObj();
+            for (size_t i = 0; i < scene->getObjCount(); ++i) {
                 if (ImGui::TreeNode((scene->getObjNames()->at(i) + "##" + std::to_string(i)).c_str())) {
-                    if (ImGui::Selectable("Select", m_selectedObjIdx == scene->getObjects()->at(i).idx)) {
-                        m_selectedObjIdx = scene->getObjects()->at(i).idx;
+                    if (ImGui::Selectable("Select", m_selectedObjIdx == i)) {
+                        m_selectedObjIdx = i;
                     }
                     if (ImGui::Button("Delete")) {
                         m_selectedObjIdx = UINT32_MAX; // Reset selection
-                        scene->deleteObj(scene->getObjects()->at(i).idx);
+                        scene->deleteObj(i);
                     }
                     if (ImGui::TreeNode(("Details##" + std::to_string(i)).c_str())) {
-                        ImGui::Text("Object Index: %zu", scene->getObjects()->at(i).idx);
+                        ImGui::Text("Object Index: %zu", i);
                         ImGui::TreePop();
                     }
                     ImGui::TreePop();
                 }
             }
-            if (ImGui::Button("Add PBR Cube")) scene->AddPBRCubeObj();
-            if (ImGui::Button("Add Barel")) scene->AddBarelObj();
-            if (ImGui::Button("Add SkyBox")) scene->AddSkyBox();
-            if (ImGui::Button("Add Sphere")) scene->AddSphereObj();
             ImGui::TreePop();
         }
 
@@ -235,7 +230,6 @@ void ImguiUI::physicsPropertiesEdit(Scene* scene) {
     if (ImGui::CollapsingHeader("Physics Properties")) {
         Physics* physics = scene->getPhysics();
         Planet& planet = physics->getPlanets()->at(m_selectedObjIdx);
-        ImGui::Text("Planet ID: %u", planet.id);
         ImGui::SliderFloat("Mass", &planet.mass, 1.0f, 10000.0f);
         ImGui::Text("Position: (%.2f, %.2f, %.2f)", planet.pos.x, planet.pos.y, planet.pos.z);
     }
