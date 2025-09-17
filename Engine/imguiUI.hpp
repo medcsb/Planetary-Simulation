@@ -65,6 +65,7 @@ public:
     void cleanup();
 
 private:
+    void initFileDialog();
     void beginDockSpace();
 
     void renderScenePanel(ImTextureID sceneTexture, FboSize* mainFboSize);
@@ -75,6 +76,7 @@ private:
     void sceneSettings(Scene* scene, std::vector<Light>* lights);
     void shaders(std::vector<Shader>* shaders);
 
+    void TextureEdit(Scene* scene);
     void transformEdit(Transform& transform);
     void pbrMaterialEdit(PBR_Renderable& renderable);
     void physicsPropertiesEdit(Scene* scene);

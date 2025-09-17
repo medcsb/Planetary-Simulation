@@ -1,6 +1,9 @@
 #include "imguiUI.hpp"
 
+#include "ImFileDialog.h"
+
 #include <algorithm>
+#include <iostream>
 
 ImguiUI::ImguiUI() {}
 
@@ -46,6 +49,31 @@ void ImguiUI::init(GLFWwindow* window, const std::string& glsl_version) {
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
     ImGui_ImplOpenGL3_Init(version.c_str());
+    initFileDialog();
+}
+
+void ImguiUI::initFileDialog() {
+    // Tell ImFileDialog how to make GL textures from raw data
+    ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
+        GLuint tex;
+        glGenTextures(1, &tex);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0,
+                    (fmt == 0) ? GL_BGRA : GL_RGBA,
+                    GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return (void*)(uintptr_t)tex; // match ImTextureID (GLuint in your case)
+    };
+
+    ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+        GLuint texID = (GLuint)(uintptr_t)tex;
+        glDeleteTextures(1, &texID);
+    };
 }
 
 void ImguiUI::beginRender() {
@@ -116,6 +144,7 @@ void ImguiUI::renderEditPanel(UI_Struct& ui_struct) {
     }
     transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
     pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
+    TextureEdit(ui_struct.scene);
     physicsPropertiesEdit(ui_struct.scene);
     ImGui::End();
 }
@@ -223,6 +252,28 @@ void ImguiUI::pbrMaterialEdit(PBR_Renderable& renderable) {
         ImGui::SliderFloat("Metallic", &renderable.material.ubo.metallic, 0.0f, 1.0f);
         ImGui::SliderFloat("Roughness", &renderable.material.ubo.roughness, 0.0f, 1.0f);
         ImGui::SliderFloat("Ambient Occlusion", &renderable.material.ubo.ao, 0.0f, 1.0f);
+    }
+}
+
+void ImguiUI::TextureEdit(Scene* scene) {
+    if (ImGui::CollapsingHeader("Texture Editor")) {
+        // 1. Buttons to open dialogs
+        if (ImGui::Button("Select texture")) {
+            ifd::FileDialog::Instance().Open(
+                "OpenFileDialog",
+                "Choose a file",
+                ".*"
+            );
+        }
+
+        // 2. Handle open dialog result
+        if (ifd::FileDialog::Instance().IsDone("OpenFileDialog")) {
+            if (ifd::FileDialog::Instance().HasResult()) {
+                std::filesystem::path res = ifd::FileDialog::Instance().GetResult();
+                std::cout << "User picked file: " << res << std::endl;
+            }
+            ifd::FileDialog::Instance().Close();
+        }
     }
 }
 

@@ -45,6 +45,21 @@ target_include_directories(imgui PUBLIC
     extern/glfw/include
 )
 
+# stb_image (header-only)
+set(STB_SRC
+    extern/single_header_libs/stb_image_impl.cpp
+)
+
+# imFileDialog
+add_library(imfiledialog STATIC 
+    extern/fileDialog/ImFileDialog.cpp
+)
+target_link_libraries(imfiledialog PUBLIC imgui)
+target_include_directories(imfiledialog PUBLIC
+    extern/fileDialog
+    extern/single_header_libs
+)
+
 # Your main application
 file(GLOB ENGINE_SRC
     Engine/*.cpp
@@ -68,12 +83,14 @@ add_executable(${PROJECT_NAME}
     ${ENGINE_SRC}
     ${RENDER_SYSTEMS_SRC}
     ${PHYSICS_SRC}
+    ${STB_SRC}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     glad
     imgui
+    imfiledialog
 )
 
 # On Linux, you may need pthread and dl
@@ -85,12 +102,7 @@ endif()
 
 # Include dirs
 target_include_directories(${PROJECT_NAME} PRIVATE
-    extern/glad/include
-    extern/glfw/include
     extern/glm
-    extern/imgui
-    extern/imgui/backends
-    extern/single_header_libs
     Engine/include
     Renderer/include
     Renderer/
