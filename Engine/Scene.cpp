@@ -1,8 +1,24 @@
 #include "Scene.hpp"
 
-
 //Scene::Scene() {}
 Scene::~Scene() {}
+
+void Scene::loadTextures() {
+    PBR_Texture earthTexture;
+    earthTexture.id = 0;
+    EARTH_TEXTURE = 0;
+    earthTexture.albedo.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/albedo_map.jpg", 1);
+    earthTexture.normal.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/normal_map.jpg", 2);
+    earthTexture.metallic.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/metal_map.jpg", 4);
+    earthTexture.flags = HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_METALLIC_TEX;
+    m_textures.push_back(earthTexture);
+}
+
+void Scene::clear() {
+    for (size_t i = m_pbrCount; i > 0; --i) {
+        deleteObj(i - 1);
+    }
+}
 
 void Scene::cleanup() {
     for (auto& renderable : m_pbrRenderables) {
@@ -21,6 +37,7 @@ void Scene::update(float dt) {
 }
 
 void Scene::initExample() {
+    loadTextures();
     AddSkyBox();
     AddLight();
     AddSphereObj();
@@ -28,6 +45,18 @@ void Scene::initExample() {
     AddSphereObj();
     m_pbrRenderables.back().transform.setPos(glm::vec3(-3.0f, 0.0f, 0.0f));
     m_physics.addPlanet(m_pbrRenderables.back().transform.pos, glm::vec3(-0.05f), 1.0f, 1.0f);
+}
+
+void Scene::deleteObj(size_t idx) {
+    m_pbrRenderables[idx].meshBuffer.cleanup();
+    m_pbrRenderables.erase(m_pbrRenderables.begin() + idx);
+    m_pbrCount--;
+    // delete the model
+    m_models.erase(m_models.begin() + idx);
+    // delete the object name
+    m_objNames.erase(m_objNames.begin() + idx);
+    // update physics planets
+    m_physics.getPlanets()->erase(m_physics.getPlanets()->begin() + idx);
 }
 
 void Scene::AddPlanetObj() {
@@ -43,7 +72,6 @@ void Scene::AddSphereObj() {
     m_pbrCount++;
     m_objNames.push_back("Sphere " + std::to_string(m_pbrCount));
 
-
     Model sphereModel;
     sphereModel.SphereModel();
     m_models.push_back(sphereModel);
@@ -56,7 +84,7 @@ void Scene::AddSphereObj() {
         nullptr
     );
 
-    int flags = HAS_ALBEDO_TEX | HAS_NORMAL_TEX | HAS_METALLIC_TEX;
+    int flags = m_textures[EARTH_TEXTURE].flags;
     m_pbrRenderables[m_pbrCount - 1].material.ubo = {
         .color = {0.2f, 0.5f, 0.8f},
         .attenuationFactor = 1.0f,
@@ -69,9 +97,9 @@ void Scene::AddSphereObj() {
         .pad = {0.0f, 0.0f}
     };
 
-    m_pbrRenderables[m_pbrCount - 1].material.albedoTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/albedo_map.jpg", 1);
-    m_pbrRenderables[m_pbrCount - 1].material.normalTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/normal_map.jpg", 2);
-    m_pbrRenderables[m_pbrCount - 1].material.metallicTexture.loadTexture(std::string(TEXTURE_DIR) + "pbr_earth/metal_map.jpg", 4);
+    m_pbrRenderables[m_pbrCount - 1].material.albedoTexture = m_textures[EARTH_TEXTURE].albedo;
+    m_pbrRenderables[m_pbrCount - 1].material.normalTexture = m_textures[EARTH_TEXTURE].normal;
+    m_pbrRenderables[m_pbrCount - 1].material.metallicTexture = m_textures[EARTH_TEXTURE].metallic;
 
     m_pbrRenderables[m_pbrCount - 1].transform = {
         .m_matrix = glm::mat4(1.0f),
@@ -113,7 +141,6 @@ void Scene::AddLight() {
 
     glGenVertexArrays(1, &mainLight.dummyVAO);
     m_renderInfo.lights.push_back(mainLight);
-
 }
 
 VAOConfig Scene::createPBRConfig(size_t idx) {
@@ -149,18 +176,6 @@ VAOConfig Scene::createConfig(size_t idx) {
     config.usage = GL_DYNAMIC_DRAW;
 
     return config;
-}
-
-void Scene::deleteObj(size_t idx) {
-    m_pbrRenderables[idx].meshBuffer.cleanup();
-    m_pbrRenderables.erase(m_pbrRenderables.begin() + idx);
-    m_pbrCount--;
-    // delete the model
-    m_models.erase(m_models.begin() + idx);
-    // delete the object name
-    m_objNames.erase(m_objNames.begin() + idx);
-    // update physics planets
-    m_physics.getPlanets()->erase(m_physics.getPlanets()->begin() + idx);
 }
 
 std::vector<DummyVert> Scene::getDummyVerts(std::vector<Vertex>& vertices) {

@@ -108,6 +108,12 @@ void ImguiUI::renderEditPanel(UI_Struct& ui_struct) {
         return;
     }
     size_t pbrIdx = m_selectedObjIdx;
+    if (ImGui::Button("Delete")) {
+        m_selectedObjIdx = UINT32_MAX; // Reset selection
+        ui_struct.scene->deleteObj(pbrIdx);
+        ImGui::End();
+        return;
+    }
     transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
     pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
     physicsPropertiesEdit(ui_struct.scene);
@@ -139,22 +145,15 @@ void ImguiUI::settings() {
 
 void ImguiUI::sceneSettings(Scene* scene, std::vector<Light>* lights) {
     if (ImGui::CollapsingHeader("Scene Settings")) {
+        if (ImGui::Button("Add Planet")) scene->AddPlanetObj();
+        if (ImGui::Button("Reset")) {
+            m_selectedObjIdx = UINT32_MAX;
+            scene->clear();
+        };
         if (ImGui::TreeNode("Objects")) {
-            if (ImGui::Button("Add Planet")) scene->AddPlanetObj();
             for (size_t i = 0; i < scene->getObjCount(); ++i) {
-                if (ImGui::TreeNode((scene->getObjNames()->at(i) + "##" + std::to_string(i)).c_str())) {
-                    if (ImGui::Selectable("Select", m_selectedObjIdx == i)) {
-                        m_selectedObjIdx = i;
-                    }
-                    if (ImGui::Button("Delete")) {
-                        m_selectedObjIdx = UINT32_MAX; // Reset selection
-                        scene->deleteObj(i);
-                    }
-                    if (ImGui::TreeNode(("Details##" + std::to_string(i)).c_str())) {
-                        ImGui::Text("Object Index: %zu", i);
-                        ImGui::TreePop();
-                    }
-                    ImGui::TreePop();
+                if (ImGui::Selectable(scene->getObjNames()->at(i).c_str(), m_selectedObjIdx == i)) {
+                    m_selectedObjIdx = i;
                 }
             }
             ImGui::TreePop();
@@ -205,25 +204,26 @@ void ImguiUI::beginDockSpace() {
 }
 
 void ImguiUI::transformEdit(Transform& transform) {
-    if (ImGui::SliderFloat3("Position", glm::value_ptr(transform.pos), -5.0f, 5.0f)) {
-        transform.calcMatrix();
-    }
-    if (ImGui::SliderFloat3("Rotation", glm::value_ptr(transform.rot), -180.0f, 180.0f)) {
-        transform.calcMatrix();
-    }
-    if (ImGui::SliderFloat3("Scale", glm::value_ptr(transform.scale), 0.1f, 5.0f)) {
-        transform.calcMatrix();
+    if (ImGui::CollapsingHeader("Transform")) {
+        if (ImGui::SliderFloat3("Position", glm::value_ptr(transform.pos), -5.0f, 5.0f))
+            transform.calcMatrix();
+        if (ImGui::SliderFloat3("Rotation", glm::value_ptr(transform.rot), -180.0f, 180.0f))
+            transform.calcMatrix();
+        if (ImGui::SliderFloat3("Scale", glm::value_ptr(transform.scale), 0.1f, 5.0f))
+            transform.calcMatrix();
     }
 }
 
 void ImguiUI::pbrMaterialEdit(PBR_Renderable& renderable) {
-    ImGui::ColorEdit3("Base Color", glm::value_ptr(renderable.material.ubo.color));
-    ImGui::SliderFloat("attenuation", &renderable.material.ubo.attenuationFactor, 0.0f, 10.0f);
-    ImGui::SliderFloat("Ambient", &renderable.material.ubo.ambientIntensity, 0.0f, 1.0f);
-    ImGui::SliderFloat("Gamma", &renderable.material.ubo.gamma, 0.0f, 3.0f);
-    ImGui::SliderFloat("Metallic", &renderable.material.ubo.metallic, 0.0f, 1.0f);
-    ImGui::SliderFloat("Roughness", &renderable.material.ubo.roughness, 0.0f, 1.0f);
-    ImGui::SliderFloat("Ambient Occlusion", &renderable.material.ubo.ao, 0.0f, 1.0f);
+    if (ImGui::CollapsingHeader("PBR Material")) {
+        ImGui::ColorEdit3("Base Color", glm::value_ptr(renderable.material.ubo.color));
+        ImGui::SliderFloat("attenuation", &renderable.material.ubo.attenuationFactor, 0.0f, 10.0f);
+        ImGui::SliderFloat("Ambient", &renderable.material.ubo.ambientIntensity, 0.0f, 1.0f);
+        ImGui::SliderFloat("Gamma", &renderable.material.ubo.gamma, 0.0f, 3.0f);
+        ImGui::SliderFloat("Metallic", &renderable.material.ubo.metallic, 0.0f, 1.0f);
+        ImGui::SliderFloat("Roughness", &renderable.material.ubo.roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Ambient Occlusion", &renderable.material.ubo.ao, 0.0f, 1.0f);
+    }
 }
 
 void ImguiUI::physicsPropertiesEdit(Scene* scene) {

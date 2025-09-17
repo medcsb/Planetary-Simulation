@@ -22,11 +22,14 @@ private:
     std::vector<Shader> m_shaderPrograms;
     std::vector<PBR_Renderable> m_pbrRenderables;
     std::vector<Model> m_models;
+    std::vector<PBR_Texture> m_textures;
     std::vector<std::string> m_objNames;
     SkyBox m_skyBox;
     RenderInfo m_renderInfo;
     
 public:
+    static inline uint32_t EARTH_TEXTURE = 0;
+
     Scene(Physics& physics) : m_physics(physics) {}
     ~Scene();
 
@@ -42,22 +45,20 @@ public:
     Physics* getPhysics() { return &m_physics; }
     size_t getObjCount() const { return m_pbrCount; }
 
+    void initExample();
     void AddLight();
-    
     void AddSphereObj();
     void AddPlanetObj();
-
     void AddSkyBox();
-
     void deleteObj(size_t idx);
-    
-    void initExample();
-
+    void clear();
     void update(float dt);
     
     private:
     VAOConfig createConfig(size_t idx);
     VAOConfig createPBRConfig(size_t idx);
+
+    void loadTextures();
     
     std::vector<DummyVert> getDummyVerts(std::vector<Vertex>& vertices);
 };
