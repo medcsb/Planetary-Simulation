@@ -13,13 +13,24 @@
 #define HAS_ROUGHNESS_TEX  0x08 // bit 4
 #define HAS_AO_TEX         0x10 // bit 5
 
+enum class TextureType {
+    ALBEDO = 0,
+    NORMAL = 1,
+    METALLIC = 2,
+    ROUGHNESS = 3,
+    AO = 4
+};
+
 class Texture {
 private:
     GLuint m_id = 0;
     GLint m_unit = 0;
+    std::string m_path;
 public:
     Texture();
     ~Texture();
+
+    std::string getPath() const { return m_path; }
 
     GLuint getTextureId() const { return m_id; }
     GLint getTextureUnit() const { return m_unit; }

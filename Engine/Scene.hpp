@@ -17,6 +17,8 @@ class Scene {
 private:
     Physics& m_physics;
 
+    bool m_paused = false;
+
     size_t m_pbrCount = 0;
 
     std::vector<Shader> m_shaderPrograms;
@@ -34,6 +36,9 @@ public:
     ~Scene();
 
     void cleanup();
+
+    void pause() { m_paused = !m_paused; }
+    bool isPaused() const { return m_paused; }
 
     void setViewMatrix(const glm::mat4& view) { m_renderInfo.viewMatrix = view; }
     void setProjectionMatrix(const glm::mat4& projection) { m_renderInfo.projectionMatrix = projection; }

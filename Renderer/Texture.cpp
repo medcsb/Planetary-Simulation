@@ -11,6 +11,7 @@ Texture::~Texture() {}
 
 void Texture::loadTexture(const std::string& path, GLint unit, bool genMipMaps) {
     m_unit = unit;
+    m_path = path;
     int widthImg, heightImg, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(path.c_str(), &widthImg, &heightImg, &nrChannels, 0);

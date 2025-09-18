@@ -76,7 +76,8 @@ private:
     void sceneSettings(Scene* scene, std::vector<Light>* lights);
     void shaders(std::vector<Shader>* shaders);
 
-    void TextureEdit(Scene* scene);
+    void textureEdit(Scene* scene);
+    void textureTypeSelect(PBR_Renderable& renderable, TextureType type);
     void transformEdit(Transform& transform);
     void pbrMaterialEdit(PBR_Renderable& renderable);
     void physicsPropertiesEdit(Scene* scene);

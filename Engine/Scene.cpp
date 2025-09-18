@@ -29,7 +29,7 @@ void Scene::cleanup() {
 }
 
 void Scene::update(float dt) {
-    m_physics.update(dt);
+    if (!m_paused) m_physics.update(dt);
     for (size_t i = 0; i < m_pbrCount; ++i) {
         m_pbrRenderables[i].transform.setPos(m_physics.getPlanets()->at(i).pos);
         m_pbrRenderables[i].transform.calcMatrix();
@@ -87,8 +87,8 @@ void Scene::AddSphereObj() {
     int flags = m_textures[EARTH_TEXTURE].flags;
     m_pbrRenderables[m_pbrCount - 1].material.ubo = {
         .color = {0.2f, 0.5f, 0.8f},
-        .attenuationFactor = 1.0f,
-        .ambientIntensity = 0.4f,
+        .attenuationFactor = 10.0f,
+        .ambientIntensity = 0.1f,
         .gamma = 2.2f,
         .roughness = 0.5f,
         .metallic = 0.5f,

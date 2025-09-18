@@ -144,7 +144,7 @@ void ImguiUI::renderEditPanel(UI_Struct& ui_struct) {
     }
     transformEdit(ui_struct.pbrRenderables->at(pbrIdx).transform);
     pbrMaterialEdit(ui_struct.pbrRenderables->at(pbrIdx));
-    TextureEdit(ui_struct.scene);
+    textureEdit(ui_struct.scene);
     physicsPropertiesEdit(ui_struct.scene);
     ImGui::End();
 }
@@ -174,6 +174,7 @@ void ImguiUI::settings() {
 
 void ImguiUI::sceneSettings(Scene* scene, std::vector<Light>* lights) {
     if (ImGui::CollapsingHeader("Scene Settings")) {
+        if (ImGui::Button(scene->isPaused() ? "Play" : "Pause")) scene->pause();
         if (ImGui::Button("Add Planet")) scene->AddPlanetObj();
         if (ImGui::Button("Reset")) {
             m_selectedObjIdx = UINT32_MAX;
@@ -249,31 +250,129 @@ void ImguiUI::pbrMaterialEdit(PBR_Renderable& renderable) {
         ImGui::SliderFloat("attenuation", &renderable.material.ubo.attenuationFactor, 0.0f, 10.0f);
         ImGui::SliderFloat("Ambient", &renderable.material.ubo.ambientIntensity, 0.0f, 1.0f);
         ImGui::SliderFloat("Gamma", &renderable.material.ubo.gamma, 0.0f, 3.0f);
-        ImGui::SliderFloat("Metallic", &renderable.material.ubo.metallic, 0.0f, 1.0f);
-        ImGui::SliderFloat("Roughness", &renderable.material.ubo.roughness, 0.0f, 1.0f);
-        ImGui::SliderFloat("Ambient Occlusion", &renderable.material.ubo.ao, 0.0f, 1.0f);
+        ImGui::SliderFloat("Metallic##pbr", &renderable.material.ubo.metallic, 0.0f, 1.0f);
+        ImGui::SliderFloat("Roughness##pbr", &renderable.material.ubo.roughness, 0.0f, 1.0f);
+        ImGui::SliderFloat("Ambient Occlusion##pbr", &renderable.material.ubo.ao, 0.0f, 1.0f);
     }
 }
 
-void ImguiUI::TextureEdit(Scene* scene) {
+void ImguiUI::textureEdit(Scene* scene) {
     if (ImGui::CollapsingHeader("Texture Editor")) {
-        // 1. Buttons to open dialogs
-        if (ImGui::Button("Select texture")) {
-            ifd::FileDialog::Instance().Open(
-                "OpenFileDialog",
-                "Choose a file",
-                ".*"
-            );
-        }
+        PBR_Renderable& renderable = scene->getPBRRenderables()->at(m_selectedObjIdx);
+        textureTypeSelect(renderable, TextureType::ALBEDO);
+        textureTypeSelect(renderable, TextureType::NORMAL);
+        textureTypeSelect(renderable, TextureType::METALLIC);
+        textureTypeSelect(renderable, TextureType::ROUGHNESS);
+        textureTypeSelect(renderable, TextureType::AO);
+    }
+}
 
-        // 2. Handle open dialog result
-        if (ifd::FileDialog::Instance().IsDone("OpenFileDialog")) {
-            if (ifd::FileDialog::Instance().HasResult()) {
-                std::filesystem::path res = ifd::FileDialog::Instance().GetResult();
-                std::cout << "User picked file: " << res << std::endl;
-            }
-            ifd::FileDialog::Instance().Close();
+void ImguiUI::textureTypeSelect(PBR_Renderable& renderable, TextureType type) {
+    std::string label;
+    int flag = renderable.material.ubo.flags;
+    bool enabled = false;
+    std::string path = "No texture loaded";
+    switch (type) {
+        case TextureType::ALBEDO:
+            label = "Albedo"; enabled = flag & HAS_ALBEDO_TEX;
+            if (!enabled) break;
+            path = renderable.material.albedoTexture.getPath(); break;
+        case TextureType::NORMAL:
+            label = "Normal"; enabled = flag & HAS_NORMAL_TEX;
+            if (!enabled) break;
+            path = renderable.material.normalTexture.getPath(); break;
+        case TextureType::METALLIC:
+            label = "Metallic"; enabled = flag & HAS_METALLIC_TEX;
+            if (!enabled) break;
+            path = renderable.material.metallicTexture.getPath(); break;
+        case TextureType::ROUGHNESS:
+            label = "Roughness"; enabled = flag & HAS_ROUGHNESS_TEX;
+            if (!enabled) break;
+            path = renderable.material.roughnessTexture.getPath(); break;
+        case TextureType::AO:
+            label = "Ambient Occlusion"; enabled = flag & HAS_AO_TEX;
+            if (!enabled) break;
+            path = renderable.material.aoTexture.getPath(); break;
+    }
+
+    std::string fileDialogId = "OpenFileDialog##" + label;
+    std::string toggleLabel = std::string(enabled ? "ON" : "OFF") + "##" + label;
+
+    // 1. Buttons to open dialogs
+    if (ImGui::Button((label + "##tex").c_str())) {
+        ifd::FileDialog::Instance().Open(
+            fileDialogId,
+            "Choose a file",
+            "image files (*.jpg *.jpeg *.png){.jpg,.jpeg,.png}"
+        );
+    }
+
+    ImGui::SameLine();
+
+    ImGui::PushStyleColor(ImGuiCol_Button, 
+        enabled ? ImVec4(0.2f, 0.7f, 0.2f, 1.0f)  // green if on
+                : ImVec4(0.7f, 0.2f, 0.2f, 1.0f)); // red if off
+
+    if (ImGui::Button(toggleLabel.c_str(), ImVec2(30, 20))) {
+        switch(type) {
+            case TextureType::ALBEDO:
+                renderable.material.ubo.flags ^= HAS_ALBEDO_TEX;
+                break;
+            case TextureType::NORMAL:
+                renderable.material.ubo.flags ^= HAS_NORMAL_TEX;
+                break;
+            case TextureType::METALLIC:
+                renderable.material.ubo.flags ^= HAS_METALLIC_TEX;
+                break;
+            case TextureType::ROUGHNESS:
+                renderable.material.ubo.flags ^= HAS_ROUGHNESS_TEX;
+                break;
+            case TextureType::AO:
+                renderable.material.ubo.flags ^= HAS_AO_TEX;
+                break;
         }
+    }
+    ImGui::PopStyleColor();
+
+    if (path == "") path = "No texture loaded";
+
+    ImGui::TextUnformatted(("Path: " + path).c_str());
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("%s", path.c_str());
+    }
+
+    // 2. Handle open dialog result
+    if (ifd::FileDialog::Instance().IsDone(fileDialogId)) {
+        if (ifd::FileDialog::Instance().HasResult()) {
+            std::filesystem::path res = ifd::FileDialog::Instance().GetResult();
+            try {
+                switch(type) {
+                    case TextureType::ALBEDO:
+                        renderable.material.albedoTexture.loadTexture(res.string(), 0);
+                        renderable.material.ubo.flags |= HAS_ALBEDO_TEX;
+                        break;
+                    case TextureType::NORMAL:
+                        renderable.material.normalTexture.loadTexture(res.string(), 1);
+                        renderable.material.ubo.flags |= HAS_NORMAL_TEX;
+                        break;
+                    case TextureType::METALLIC:
+                        renderable.material.metallicTexture.loadTexture(res.string(), 2);
+                        renderable.material.ubo.flags |= HAS_METALLIC_TEX;
+                        break;
+                    case TextureType::ROUGHNESS:
+                        renderable.material.roughnessTexture.loadTexture(res.string(), 3);
+                        renderable.material.ubo.flags |= HAS_ROUGHNESS_TEX;
+                        break;
+                    case TextureType::AO:
+                        renderable.material.aoTexture.loadTexture(res.string(), 4);
+                        renderable.material.ubo.flags |= HAS_AO_TEX;
+                        break;
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Error loading texture: " << e.what() << std::endl;
+            }
+        }
+        ifd::FileDialog::Instance().Close();
     }
 }
 
