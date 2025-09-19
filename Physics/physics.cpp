@@ -12,6 +12,12 @@ void Physics::addPlanet(const glm::vec3& pos, const glm::vec3& vel, float mass, 
     p.pos = pos;
     p.vel = vel;
     p.acc = glm::vec3(0.0f);
+
+    p.torque = glm::vec3(0.0f);
+    p.inertia = 2.0f/5.0f * mass * r * r * glm::vec3(1.0f); // I = 2/5 m r^2 for solid sphere
+    p.angVel = glm::vec3(0.0f, 9.0f, 0.0f);
+    p.rot = glm::vec3(0.0f);
+
     p.mass = mass;
     p.r = r;
     m_planets.push_back(p);
@@ -85,4 +91,7 @@ void Physics::resolveCollision(Planet& p1, Planet& p2) {
 void Physics::integrate(Planet& p, float dt) {
     p.vel += p.acc * dt;
     p.pos += p.vel * dt;
+
+    p.angVel += p.torque / p.inertia * dt;
+    p.rot += p.angVel * dt;
 }

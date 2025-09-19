@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <algorithm> // std::min, std::max
 
+#include <vector>
+
 #define IFD_DIALOG_FILE			0
 #define IFD_DIALOG_DIRECTORY	1
 #define IFD_DIALOG_SAVE			2
@@ -60,7 +62,7 @@ namespace ifd {
 #endif
 
 			FileTreeNode(const std::string& path) {
-				Path = std::filesystem::u8path(path);
+				Path = std::filesystem::path(path);
 				Read = false;
 			}
 

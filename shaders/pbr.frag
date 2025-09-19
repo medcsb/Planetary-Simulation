@@ -76,6 +76,18 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness) {
 vec3 fresnelSchlick(float cosTheta, vec3 F0) {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
+
+float wrapDiffuse(float NdotL, float wrapMin, float wrapMax) {
+    // NdotL in [-1, 1]
+    // wrapMin < 0, wrapMax = 0
+    if (NdotL >= wrapMax)
+        return NdotL;                  // fully lit side
+    else if (NdotL > wrapMin)
+        return (NdotL - wrapMin) / (wrapMax - wrapMin) * wrapMax; 
+        // gradually fades from wrapMax to wrapMin
+    else
+        return 0.0;                     // fully dark side
+}
 // ----------------------------------------------------------------------------
 
 void main() {
@@ -117,8 +129,7 @@ void main() {
 
     // Light attenuation (point light)
     float dist = length(lightPos - FragPos);
-    float attenuation = attenuationFactor / (dist * dist);
-    vec3 radiance = lightColor * attenuation;
+    vec3 radiance = lightColor;
 
     // Cook-Torrance BRDF
     float NDF = DistributionGGX(N, H, rough);
@@ -136,6 +147,7 @@ void main() {
     kD *= 1.0 - metallicVal;
 
     float NdotL = max(dot(N, L), 0.0);
+    
     vec3 Lo = (kD * albedo / 3.14159265 + specular) * radiance * NdotL;
 
     // Ambient (IBL would be better, but keep AO simple here)

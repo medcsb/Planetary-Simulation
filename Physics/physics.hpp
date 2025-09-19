@@ -8,6 +8,12 @@ struct Planet {
     glm::vec3 pos;
     glm::vec3 vel;
     glm::vec3 acc;
+
+    glm::vec3 torque;
+    glm::vec3 inertia;
+    glm::vec3 angVel;
+    glm::vec3 rot;
+
     float mass;
     float r;
 };
